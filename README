@@ -1,0 +1,32 @@
+OS Version
+ubuntu 16.0.4 LTS
+
+platform
+C++
+
+special configurations
+none
+
+version of compilers
+thrift 0.9.3
+g++ pre-c11
+boost library
+
+run instructions
+where the Makefile is, run "make" on terminal
+after that, run "export LD_LIBRARY_PATH=/usr/local/lib/:${LD_LIBRARY_PATH}"
+you will need to run this for every new terminal (one for server, one for client)
+./kvserver
+./kvclient <your parameters>
+
+Copy and Pasted for your convenience:
+./kvclient -server host:port -set 'my_key' 'my_value'
+
+./kvclient -server host:port -get 'my_key' > my_value_file
+
+./kvclient -server host:port -get 'my_key' my_value_file
+
+./kvclient -server host:port -del 'my_key'
+
+i think for -get ">" the ">" is undetectable to me.
+might have to run w/o ">". file is still outputed.
