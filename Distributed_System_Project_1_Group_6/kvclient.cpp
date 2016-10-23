@@ -90,7 +90,8 @@ int main(int argc, char **argv) {
       //ofstream outfile(filename.c_str());
       cout << res << endl;
       if (res.error == 0) {
-        ofstream outfile("my_value_file");
+        //ofstream outfile("my_value_file");
+        ofstream outfile(filename.c_str());
         outfile << res.value << endl;
         outfile.close();
       }
