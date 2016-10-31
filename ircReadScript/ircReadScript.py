@@ -26,10 +26,15 @@ class IRCClient(object):
             while "\r\n" in buffer:
                 #line, _, buffer = buffer.partition("\r\n")
                 line, buffer = buffer.split("\r\n", maxsplit=1)
-                print(line)
+                #print(line)
                 command, *params = line.split()
+                print("=======================\r\n")
+                print("=======================\r\n")
                 if command == "PING":
                     self.send("PONG %s" % params[0])
+                else:
+                    print(line)
+                
 
 client = IRCClient("wz634ReadBot", "wz634ReadBot", "Waron Zeng", "#nyu-distributed-systems")
 client.connect("irc.freenode.net", 6667)
