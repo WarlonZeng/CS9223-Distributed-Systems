@@ -88,18 +88,24 @@ class KVStoreHandler : virtual public KVStoreIf {
     printf("kvdelete\n");
     //cout << key << ": " << kvstore[key] << endl;
   }
-
 };
+
+
+
 
 int main(int argc, char **argv) {
   int port = 9090;
-  shared_ptr<KVStoreHandler> handler(new KVStoreHandler());
-  shared_ptr<TProcessor> processor(new KVStoreProcessor(handler));
-  shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-  shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-  shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+  //shared_ptr<KVStoreHandler> handler(new KVStoreHandler());
+  //shared_ptr<TProcessor> processor(new KVStoreProcessor(handler));
+  //shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+  //shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+  //shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-  TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
+  //TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
+  
+
+
+
   cout << "Starting the server..." << endl;
   server.serve();
   cout << "Done." << endl;
