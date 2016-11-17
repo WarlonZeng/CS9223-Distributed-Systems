@@ -21,6 +21,11 @@ class IRCClient(object):
 
     def poll(self):
         buffer = ""
+        print('=========================\r\n')
+        print('=========================\r\n')
+        outfile = open('log.txt', 'a')
+        outfile.write('=========================\r\n')
+        outfile.write('=========================\r\n')
         while True:
         	try:
         		buffer += self.socket.recv(8192).decode()
@@ -29,16 +34,14 @@ class IRCClient(object):
         			line, buffer = buffer.split("\r\n", maxsplit=1)
         			#print(line)
         			command, *params = line.split()
-        			print("=======================\r\n")
-        			print("=======================\r\n")
         			if command == "PING":
         				self.send("PONG %s" % params[0])
         			else:
         				print(line)
-        				outfile = open('log.txt', 'a')
-                    	outfile.write(line)
-            else:
-            	outfile.close()
+        				outfile.write(line)
+        				outfile.write('\r\n')
+        	except:
+        		outfile.close()
 
 client = IRCClient("wz634ReadBot", "wz634ReadBot", "Waron Zeng", "#nyu-distributed-systems")
 client.connect("irc.freenode.net", 6667)
