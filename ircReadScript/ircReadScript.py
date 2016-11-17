@@ -36,9 +36,9 @@ class IRCClient(object):
         			else:
         				print(line)
         				outfile = open('log.txt', 'a')
-                    	outfile.write(line)
-            else:
-            	outfile.close()
+        				outfile.write(line)
+        	except:
+        		outfile.close()
 
 client = IRCClient("wz634ReadBot", "wz634ReadBot", "Waron Zeng", "#nyu-distributed-systems")
 client.connect("irc.freenode.net", 6667)
