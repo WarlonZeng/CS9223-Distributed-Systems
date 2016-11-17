@@ -40,8 +40,6 @@ class IRCClient(object):
         				print(line)
         				outfile.write(line)
         				outfile.write('\r\n')
-        	except:
-        		outfile.close()
 
 client = IRCClient("wz634ReadBot", "wz634ReadBot", "Waron Zeng", "#nyu-distributed-systems")
 client.connect("irc.freenode.net", 6667)
