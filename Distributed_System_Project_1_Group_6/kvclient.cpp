@@ -4,7 +4,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 
 #include <typeinfo>
 
@@ -13,52 +13,74 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
+#include <sstream>
 #include <iterator>
 #include <algorithm>
 #include <utility>
 #include <functional>
-#include <sstream>
+
+#include <stdio.h>       // perror, snprintf
+#include <stdlib.h>      // exit
+#include <unistd.h>      // close, write
+#include <string.h>      // strlen
+#include <strings.h>     // bzero
+#include <time.h>        // time, ctime
+#include <sys/socket.h>  // socket, AF_INET, SOCK_STREAM, bind, listen, accept
+#include <netinet/in.h>  // servaddr, INADDR_ANY, htons
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
-using boost::shared_ptr;
-using namespace boost::program_options;
-namespace po = boost::program_options;
+// using namespace boost::program_options;
+// namespace po = boost::program_options;
 
-using namespace std;
+// using namespace std;
 using namespace kvstore;
 
 int main(int argc, char **argv) {
+
+
+  // =============================
+  // COMMAND LINE PARSING 
+  // =============================
+
+
   // Finding arguments.
-  vector <string> args( argv + 1, argv + argc );
-  cout << argv[ 0 ] << " has " << args.size() << " arguments.\n";
+  std::vector<std::string> args( argv + 1, argv + argc );
+  std::cout << argv[ 0 ] << " has " << args.size() << " arguments.\n";
 
   for (size_t n = 0; n < args.size(); n++)
-    cout << n << ": \"" << args[ n ] << "\"\n";
+    std::cout << n << ": \"" << args[ n ] << "\"\n";
 
   // This argument is fixed. 
   size_t n = find( args.begin(), args.end(), "-server" ) - args.begin();
   
-  string server = args[n + 1].substr(0, args[n + 1].find(":")); // initialize host
-  string str_port = args[n + 1].substr(args[n + 1].find(":") + 1);
+  std::string server = args[n + 1].substr(0, args[n + 1].find(":")); // initialize host
+  std::string str_port = args[n + 1].substr(args[n + 1].find(":") + 1);
 
-  stringstream convert(str_port);
+  std::stringstream convert(str_port);
   int port = 0; // initialize port
   convert >> port;
 
   // Confirming configuration.
-  cout << server << endl;
-  cout << port << endl;
+  std::cout << server << std::endl;
+  std::cout << port << std::endl;
 
-  string key;
-  string value;
+  std::string key;
+  std::string value;
 
   boost::shared_ptr<TTransport> socket(new TSocket(server, port));
   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
   KVStoreClient client(protocol);
+
+
+  // =============================
+  // GET, SET, DEL FUNCTIONS
+  // =============================
+
 
   try {
     transport->open();
@@ -71,9 +93,9 @@ int main(int argc, char **argv) {
       value = args[j + 2].substr(0);
 
       client.kvset(res, key, value);
-      cout << key << endl;
-      cout << value << endl;
-      cout << res << endl;
+      std::cout << key << std::endl;
+      std::cout << value << std::endl;
+      std::cout << res << std::endl;
     }
 
     // Find and perform -get if available.
@@ -81,18 +103,13 @@ int main(int argc, char **argv) {
     size_t l = find( args.begin(), args.end(), "-get" ) - args.begin();
     if (find(args.begin(), args.end(), "-get") != args.end()) {
       key = args[l + 1].substr(0);
-      string filename = args[l + 2].substr(0);
+      std::string filename = args[l + 2].substr(0);
 
       client.kvget(res, key);
-      //ofstream outfile(args[l + 2].substr(0));
-      //ofstream outfile;
-      //outfile.open(args[l + 2].substr(0).c_str());
-      //ofstream outfile(filename.c_str());
-      cout << res << endl;
+      std::cout << res << std::endl;
       if (res.error == 0) {
-        //ofstream outfile("my_value_file");
-        ofstream outfile(filename.c_str());
-        outfile << res.value << endl;
+        std::ofstream outfile(filename.c_str());
+        outfile << res.value << std::endl;
         outfile.close();
       }
     }
@@ -101,16 +118,17 @@ int main(int argc, char **argv) {
     size_t k = find( args.begin(), args.end(), "-del" ) - args.begin();
     if (find(args.begin(), args.end(), "-del") != args.end()) {
       key = args[k + 1].substr(0);
-      cout << key << endl;
+      std::cout << key << std::endl;
 
       client.kvdelete(res, key);
-      cout << res << endl;
+      std::cout << res << std::endl;
     }
 
     transport->close();
   } 
   catch (TException& tx) {
-    cout << "ERROR: " << tx.what() << endl;
+    std::cerr << "ERROR: " << tx.what() << std::endl;
+    exit(1);
   }
-  return 0;
+  exit(0);
 }

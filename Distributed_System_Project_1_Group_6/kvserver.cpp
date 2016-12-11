@@ -8,28 +8,50 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TTransportUtils.h>
+
+#include <typeinfo>
+
 #include <map>
 #include <string>
 #include <iostream>
+#include <stdexcept>
+#include <sstream>
 #include <iterator>
 #include <algorithm>
 #include <utility>
 #include <functional>
-#include <sstream>
+
+#include <stdio.h>       // perror, snprintf
+#include <stdlib.h>      // exit
+#include <unistd.h>      // close, write
+#include <string.h>      // strlen
+#include <strings.h>     // bzero
+#include <time.h>        // time, ctime
+#include <sys/socket.h>  // socket, AF_INET, SOCK_STREAM, bind, listen, accept
+#include <netinet/in.h>  // servaddr, INADDR_ANY, htons
+#include <thread>
+
+#define	MAXLINE		4096	// max text line length
+#define	BUFFSIZE	8192    // buffer size for reads and writes
+#define  SA struct sockaddr
+#define	LISTENQ		1024	// 2nd argument to listen()
+#define PORT_NUM        13002
 
 using namespace apache::thrift;
+using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
 
-using boost::shared_ptr;
+// using namespace boost::shared_ptr; // boost and std should be linked-in
+// using namespace boost; /// bad practice?
 
-using namespace std;
+//using namespace std; // bad practice?
 using namespace kvstore;
 
 class KVStoreHandler : virtual public KVStoreIf {
   // I will use a map for this job. 
-  map<string, string> kvstore;
+  std::map<std::string, std::string> kvstore;
  public:
   KVStoreHandler() {}
 
@@ -88,26 +110,20 @@ class KVStoreHandler : virtual public KVStoreIf {
     printf("kvdelete\n");
     //cout << key << ": " << kvstore[key] << endl;
   }
+
 };
-
-
-
 
 int main(int argc, char **argv) {
   int port = 9090;
-  //shared_ptr<KVStoreHandler> handler(new KVStoreHandler());
-  //shared_ptr<TProcessor> processor(new KVStoreProcessor(handler));
-  //shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-  //shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-  //shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+  boost::shared_ptr<KVStoreHandler> handler(new KVStoreHandler());
+  boost::shared_ptr<TProcessor> processor(new KVStoreProcessor(handler));
+  boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+  boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+  boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-  //TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
-  
-
-
-
-  cout << "Starting the server..." << endl;
+  TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
+  std::cout << "Starting the server..." << std::endl;
   server.serve();
-  cout << "Done." << endl;
+  std::cout << "Done." << std::endl;
   return 0;
 }

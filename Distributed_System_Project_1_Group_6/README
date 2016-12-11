@@ -1,32 +1,93 @@
-OS Version
-ubuntu 16.0.4 LTS
+# Distributed Systems Key-Value Store
+Term project for CS9223 Distributed Systems, taught by Kurt Rosenfeld.
 
-platform
+## OS Version
+Ubuntu 16.0.4 LTS
+
+## Program Language
 C++
 
-special configurations
-none
+## Specifical Configurations
+Unix ">" does not work. Simply ignore when performing the GET request.
 
-version of compilers
-thrift 0.9.3
-g++ pre-c11
-boost library
+## Libraries/Compilation Configurations
+Thrift 0.9.3
+GCC std=C++11
+Boost library
 
-run instructions
-where the Makefile is, run "make" on terminal
-after that, run "export LD_LIBRARY_PATH=/usr/local/lib/:${LD_LIBRARY_PATH}"
-you will need to run this for every new terminal (one for server, one for client)
+
+---
+
+
+## Compile Instructions
+Where the MakeFile is, open terminal and run
+```git
+make
+```
+
+
+---
+
+
+## Run Instructions
+Server and client commands:
+
+### Run server:
+* By default, host = localhost and port = 9090
+```git
 ./kvserver
-./kvclient <your parameters>
+```
 
-Copy and Pasted for your convenience:
-./kvclient -server host:port -set 'my_key' 'my_value'
 
-./kvclient -server host:port -get 'my_key' > my_value_file
+---
 
-./kvclient -server host:port -get 'my_key' my_value_file
 
+### Run client commands
+Parameter definitions: 
+
+server(string host, int post): 
+connects to host and port specification. Defaults localhost, 9090. 
+```git
+./kvclient -server host:port
+```
+
+set(string key, string value): 
+creates "key" and maps "value" to key. Key-Value map is stored in server memory.
+```git
+./kvclient -server host:port -set 'my_key' 'my_value_file'
+```
+
+get(string key, string filename): 
+gets value for key, if key exists in server memory. Outputs to file specified by flename containing the value for associated key.
+```git
+./kvclient -server host:port -get 'my_key' my_key_containg_value
+```
+
+del(string key): 
+deletes key from server memory.
+```git
 ./kvclient -server host:port -del 'my_key'
+```
 
-i think for -get ">" the ">" is undetectable to me.
-might have to run w/o ">". file is still outputed.
+
+---
+
+
+## Sample client commands
+Simple test case: 
+```git
+./kvclient -server localhost:9090 -set 'hi' 'bye'
+
+./kvclient -server localhost:9090 -get 'hi' hi
+
+./kvclient -server host:port -del 'hi'
+
+
+---
+
+
+## If running doesn't work (after compliation)
+May need to run this for every new terminal (one for server, one for client): 
+```git
+export LD_LIBRARY_PATH=/usr/local/lib/:${LD_LIBRARY_PATH}
+```
