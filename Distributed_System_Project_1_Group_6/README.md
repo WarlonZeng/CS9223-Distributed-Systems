@@ -81,7 +81,7 @@ Simple test case:
 ./kvclient -server localhost:9090 -get 'hi' hi
 
 ./kvclient -server host:port -del 'hi'
-
+```
 
 ---
 
