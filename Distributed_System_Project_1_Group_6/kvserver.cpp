@@ -71,16 +71,16 @@ class KVStoreHandler : virtual public KVStoreIf {
 
     try {
       shared_kvstore[key] = value;
-      _return.error = ErrorCode::kSuccess;
       _return.value = value;
+      _return.error = ErrorCode::kSuccess;
     }
     catch (...) {
       _return.error = ErrorCode::kError;
       _return.errortext = "Server could not store value";
     }
 
-    printf("kvset\n");
-    //cout << key << ": " << shared_kvstore[key] << endl;
+    // printf("kvset\n");
+    std::cout << "kvset(" + key + ", " + value + ")" << ": " << _return << std::endl;
   }
 
 
@@ -90,14 +90,17 @@ class KVStoreHandler : virtual public KVStoreIf {
 
     try {
       _return.value = shared_kvstore[key];
-      _return.error = ErrorCode::kSuccess;
+      if (_return.value != "")
+        _return.error = ErrorCode::kSuccess;
+      else
+        _return.error = ErrorCode::kKeyNotFound;
     }
     catch (...) {
       _return.error = ErrorCode::kKeyNotFound;
     }
 
-    printf("kvget\n");
-    //cout << key << ": " << shared_kvstore[key] << endl;
+    // printf("kvget\n");
+    std::cout << "------kvget(" + key + ")" << ": " << _return << std::endl;
   }
 
 

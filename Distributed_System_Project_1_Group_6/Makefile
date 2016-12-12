@@ -19,10 +19,11 @@ default: server client
 server: kvserver.cpp
 	g++ $(FLAGS) ${CPP_OPTS} ${CPP_DEFS} -o kvserver ${GEN_INC} ${INCS_DIRS} kvserver.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS}
 
-client: kvclient.cpp kvclient_1.cpp kvclient_2.cpp
+client: kvclient.cpp kvclient_1.cpp kvclient_2.cpp consistency_test.cpp
 	g++ $(FLAGS) ${CPP_OPTS} ${CPP_DEFS} -o kvclient ${GEN_INC} ${INCS_DIRS} kvclient.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS}
 	g++ $(FLAGS) ${CPP_OPTS} ${CPP_DEFS} -o kvclient_1 ${GEN_INC} ${INCS_DIRS} kvclient_1.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS}
 	g++ $(FLAGS) ${CPP_OPTS} ${CPP_DEFS} -o kvclient_2 ${GEN_INC} ${INCS_DIRS} kvclient_2.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS}
+	g++ $(FLAGS) ${CPP_OPTS} ${CPP_DEFS} -o consistency_test ${GEN_INC} ${INCS_DIRS} consistency_test.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS} -pthread
 
 clean:
-	$(RM) -r kvclient kvclient_1 kvclient_2 kvserver
+	$(RM) -r kvclient kvclient_1 kvclient_2 consistency_test kvserver
