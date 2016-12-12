@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   std::cout << argv[ 0 ] << " has " << args.size() << " arguments.\n";
 
   for (size_t n = 0; n < args.size(); n++)
-    std::cout << n << ": \"" << args[n] << "\"\n";
+    std::cout << n << ": \"" << args[ n ] << "\"\n";
 
   // This argument is fixed. 
   size_t n = find( args.begin(), args.end(), "-server" ) - args.begin();
@@ -68,9 +68,6 @@ int main(int argc, char **argv) {
   std::cout << server << std::endl;
   std::cout << port << std::endl;
 
-  std::string key;
-  std::string value;
-
   boost::shared_ptr<TTransport> socket(new TSocket(server, port));
   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -81,57 +78,82 @@ int main(int argc, char **argv) {
   // GET, SET, DEL FUNCTIONS
   // =============================
 
+  std::string key;
+  std::string value;
+  std::string filename;
 
-  try {
-    transport->open();
-    Result res;
-    
-    // Find and perform -set if available.
-    size_t j = find( args.begin(), args.end(), "-set" ) - args.begin();
-    if (find(args.begin(), args.end(), "-set") != args.end()) {
-      key = args[j + 1].substr(0);
-      value = args[j + 2].substr(0);
-
-      client.kvset(res, key, value);
-      std::cout << key << std::endl;
-      std::cout << value << std::endl;
-      std::cout << res << std::endl;
-    }
-
-    // Find and perform -get if available.
-    // Do not mind the coded out block below.. 
-    size_t l = find( args.begin(), args.end(), "-get" ) - args.begin();
-    if (find(args.begin(), args.end(), "-get") != args.end()) {
-       key = args[l + 1].substr(0);
-       std::string filename = args[l + 2].substr(0);
-
-       std::cout << key << std::endl;
-       std::cout << filename << std::endl;
-
-      client.kvget(res, key);
-      std::cout << res << std::endl;
-      if (res.error == 0) {
-        std::ofstream outfile(filename.c_str());
-        outfile << res.value << std::endl;
-        outfile.close();
-      }
-    }
-
-    // Find and perform -del if available.
-    size_t k = find( args.begin(), args.end(), "-del" ) - args.begin();
-    if (find(args.begin(), args.end(), "-del") != args.end()) {
-      key = args[k + 1].substr(0);
-      std::cout << key << std::endl;
-
-      client.kvdelete(res, key);
-      std::cout << res << std::endl;
-    }
-
-    transport->close();
-  } 
+  try { transport->open(); }
   catch (TException& tx) {
     std::cerr << "ERROR: " << tx.what() << std::endl;
-    exit(1);
+    exit(2);
   }
-  exit(0);
+
+  while (true) {
+    std::string str;
+    std::cin >> str;
+
+    std::string buf; // Have a buffer string
+    std::stringstream ss(str); // Insert the string into a stream
+    
+    std::vector<std::string> tokens; // Create vector to hold our words
+
+    while (ss >> buf)
+        tokens.push_back(buf);
+        
+    std::cout << tokens.size() << std::endl;
+
+    for (unsigned n = 0; n < transactions.size(); n++)
+      std::cout << n << ": \"" << transactions[n] << "\"\n";
+
+    try {
+      Result res;
+
+      // Find and perform -set if available.
+      if (false) {
+        key = transactions[1];
+        value = transactions[2];
+
+        std::cout << key << std::endl;
+        std::cout << value << std::endl;
+
+        client.kvset(res, key, value);
+        std::cout << res << std::endl;
+      }
+
+      // Find and perform -get if available.
+      // Do not mind the coded out block below.. 
+      if (false) {
+        key = transactions[1];
+        filename = transactions[2];
+
+        std::cout << key << std::endl;
+        std::cout << filename << std::endl;
+
+        client.kvget(res, key);
+        std::cout << res << std::endl;
+      if (res.error == 0) {
+          std::ofstream outfile(filename.c_str());
+          outfile << "Filename " + filename + " outputed with value: " + res.value << std::endl;
+          outfile.close();
+        }
+      }
+
+      // Find and perform -del if available.
+      if (false) {
+        key = transactions[1];
+
+        std::cout << key << std::endl;
+
+        client.kvdelete(res, key);
+        std::cout << res << std::endl;
+      }
+
+      transport->close();
+    } 
+
+    catch (TException& tx) {
+      std::cerr << "ERROR: " << tx.what() << std::endl;
+      exit(1);
+    }
+  }
 }

@@ -78,7 +78,7 @@ Simple test case:
 ```git
 ./kvclient -server localhost:9090 -set 'hi' 'bye'
 
-./kvclient -server localhost:9090 -get 'hi' hi
+./kvclient -server localhost:9090 -get 'hi' 'hi'
 
 ./kvclient -server host:port -del 'hi'
 ```
