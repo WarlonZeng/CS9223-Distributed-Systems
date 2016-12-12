@@ -90,28 +90,31 @@ int main(int argc, char **argv) {
 
   while (true) {
     std::string str;
-    std::cin >> str;
+    std::getline(std::cin, str);
 
     std::string buf; // Have a buffer string
     std::stringstream ss(str); // Insert the string into a stream
     
     std::vector<std::string> tokens; // Create vector to hold our words
 
-    while (ss >> buf)
+  char chars[] = "'";
+    while (ss >> buf) {
+      for (unsigned int i = 0; i < strlen(chars); ++i) {
+        buf.erase(std::remove(buf.begin(), buf.end(), chars[i]), buf.end());
+      }
         tokens.push_back(buf);
-        
-    std::cout << tokens.size() << std::endl;
+    }
 
-    for (unsigned n = 0; n < transactions.size(); n++)
-      std::cout << n << ": \"" << transactions[n] << "\"\n";
+    for (size_t n = 0; n < tokens.size(); n++)
+      std::cout << n << ": \"" << tokens[n] << "\"\n";
 
     try {
       Result res;
 
       // Find and perform -set if available.
-      if (false) {
-        key = transactions[1];
-        value = transactions[2];
+      if (find(tokens.begin(), tokens.end(), "-set") != tokens.end()) {
+        key = tokens[1];
+        value = tokens[2];
 
         std::cout << key << std::endl;
         std::cout << value << std::endl;
@@ -121,34 +124,31 @@ int main(int argc, char **argv) {
       }
 
       // Find and perform -get if available.
-      // Do not mind the coded out block below.. 
-      if (false) {
-        key = transactions[1];
-        filename = transactions[2];
+      if (find(tokens.begin(), tokens.end(), "-get") != tokens.end()) {
+        key = tokens[1];
+        filename = tokens[2];
 
         std::cout << key << std::endl;
         std::cout << filename << std::endl;
 
         client.kvget(res, key);
         std::cout << res << std::endl;
-      if (res.error == 0) {
+        if (res.error == 0) {
           std::ofstream outfile(filename.c_str());
-          outfile << "Filename " + filename + " outputed with value: " + res.value << std::endl;
+          outfile << res.value << std::endl;
           outfile.close();
         }
       }
 
       // Find and perform -del if available.
-      if (false) {
-        key = transactions[1];
+      if (tokens[0].compare("-del") == 0) {
+        key = tokens[1];
 
         std::cout << key << std::endl;
 
         client.kvdelete(res, key);
         std::cout << res << std::endl;
       }
-
-      transport->close();
     } 
 
     catch (TException& tx) {

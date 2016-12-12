@@ -56,21 +56,22 @@ using namespace apache::thrift::server;
 //using namespace std; // bad practice?
 using namespace kvstore;
 
+// I will use a map for this job. 
+std::map<std::string, std::string> shared_kvstore;
+
 class KVStoreHandler : virtual public KVStoreIf {
-  // I will use a map for this job. 
-  std::map<std::string, std::string> kvstore;
 
  public:
   KVStoreHandler() {}
 
   void kvset(Result& _return, const std::string& key, const std::string& value) {
     // Store the value. This will replace any previous key-value store.
-    kvstore[key] = value;
+    shared_kvstore[key] = value;
 
     // Checking if we actually stored the value or not by counting number of instances
     // If true, return kSuccess
     // If false, return kError
-    if (kvstore.count(key) > 0) {
+    if (shared_kvstore.count(key) > 0) {
       _return.error = ErrorCode::kSuccess;
       _return.value = value;
     }
@@ -80,31 +81,31 @@ class KVStoreHandler : virtual public KVStoreIf {
     }
 
     printf("kvset\n");
-    //cout << key << ": " << kvstore[key] << endl;
+    //cout << key << ": " << shared_kvstore[key] << endl;
   }
 
   void kvget(Result& _return, const std::string& key) {
     // Checking if the key is in the map or not by counting number of instances
     // If true, return value and kSuccess
     // If false, return kKeyNotFound
-    if (kvstore.count(key) > 0) {
-      _return.value = kvstore[key];
+    if (shared_kvstore.count(key) > 0) {
+      _return.value = shared_kvstore[key];
       _return.error = ErrorCode::kSuccess;
     }
     else
       _return.error = ErrorCode::kKeyNotFound;
 
     printf("kvget\n");
-    //cout << key << ": " << kvstore[key] << endl;
+    //cout << key << ": " << shared_kvstore[key] << endl;
   }
 
   void kvdelete(Result& _return, const std::string& key) {
     // Checking if the key is in the map or not by counting number of instances
     // If true, delete it and return kSuccess
     // If false, return kKeyNotFound
-    if (kvstore.count(key) > 0) {
-      kvstore.erase(key); // Delete it
-      if (kvstore.count(key) > 0) { // Check if it is actually deleted
+    if (shared_kvstore.count(key) > 0) {
+      shared_kvstore.erase(key); // Delete it
+      if (shared_kvstore.count(key) > 0) { // Check if it is actually deleted
         _return.error = ErrorCode::kError;
         _return.errortext = "Server could not delete key-value pair";
       }
@@ -116,7 +117,7 @@ class KVStoreHandler : virtual public KVStoreIf {
   
 
     printf("kvdelete\n");
-    //cout << key << ": " << kvstore[key] << endl;
+    //cout << key << ": " << shared_kvstore[key] << endl;
   }
 
 };
