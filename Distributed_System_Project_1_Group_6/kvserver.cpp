@@ -64,18 +64,17 @@ class KVStoreHandler : virtual public KVStoreIf {
  public:
   KVStoreHandler() {}
 
-  void kvset(Result& _return, const std::string& key, const std::string& value) {
-    // Store the value. This will replace any previous key-value store.
-    shared_kvstore[key] = value;
 
-    // Checking if we actually stored the value or not by counting number of instances
-    // If true, return kSuccess
-    // If false, return kError
-    if (shared_kvstore.count(key) > 0) {
+  void kvset(Result& _return, const std::string& key, const std::string& value) {
+    // Store the value. This will replace any previous key-value store of same key. 
+    // Throw error if could not create key and map value to key.
+
+    try {
+      shared_kvstore[key] = value;
       _return.error = ErrorCode::kSuccess;
       _return.value = value;
     }
-    else {
+    catch (...) {
       _return.error = ErrorCode::kError;
       _return.errortext = "Server could not store value";
     }
@@ -84,38 +83,36 @@ class KVStoreHandler : virtual public KVStoreIf {
     //cout << key << ": " << shared_kvstore[key] << endl;
   }
 
+
   void kvget(Result& _return, const std::string& key) {
-    // Checking if the key is in the map or not by counting number of instances
-    // If true, return value and kSuccess
-    // If false, return kKeyNotFound
-    if (shared_kvstore.count(key) > 0) {
+    // Retrieve the value associated with the key. 
+    // Throw error if key does not exist.
+
+    try {
       _return.value = shared_kvstore[key];
       _return.error = ErrorCode::kSuccess;
     }
-    else
+    catch (...) {
       _return.error = ErrorCode::kKeyNotFound;
+    }
 
     printf("kvget\n");
     //cout << key << ": " << shared_kvstore[key] << endl;
   }
 
-  void kvdelete(Result& _return, const std::string& key) {
-    // Checking if the key is in the map or not by counting number of instances
-    // If true, delete it and return kSuccess
-    // If false, return kKeyNotFound
-    if (shared_kvstore.count(key) > 0) {
-      shared_kvstore.erase(key); // Delete it
-      if (shared_kvstore.count(key) > 0) { // Check if it is actually deleted
-        _return.error = ErrorCode::kError;
-        _return.errortext = "Server could not delete key-value pair";
-      }
-      else
-        _return.error = ErrorCode::kSuccess;
-    }
-    else
-      _return.error = ErrorCode::kKeyNotFound;
-  
 
+  void kvdelete(Result& _return, const std::string& key) {
+    // Delete key (along with its mapped value). 
+    // Throw error if key is not deleted (key does not exist). 
+
+    try {
+      shared_kvstore.erase(key);
+      _return.error = ErrorCode::kSuccess;
+    }
+    catch (...) {
+      _return.error = ErrorCode::kKeyNotFound;
+    }
+  
     printf("kvdelete\n");
     //cout << key << ": " << shared_kvstore[key] << endl;
   }
@@ -146,7 +143,7 @@ int main(int argc, char **argv) {
   int port = 9090;
   TThreadedServer server(
     boost::make_shared<KVStoreProcessorFactory>(boost::make_shared<KVStoreCloneFactory>()),
-    boost::make_shared<TServerSocket>(port), //port
+    boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>()
   );
