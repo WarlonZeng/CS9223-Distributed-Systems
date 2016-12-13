@@ -21,6 +21,7 @@
 #include <functional>
 #include <time.h>
 
+#include <cstdlib>
 #include <stdio.h>       // perror, snprintf
 #include <stdlib.h>      // exit
 #include <unistd.h>      // close, write
@@ -44,38 +45,31 @@ using namespace apache::thrift::transport;
 // using namespace std;
 using namespace kvstore;
 
+int sequence_no = 0;
+int num_of_threads = 5;
+int num_of_runs = 500;
+
+std::string set = "[-set]";
+std::string get = "[-get]";
+std::string key_1 = "[abc]";
+std::string key_2 = "[xzy]";
+std::string value_1 = "[123]";
+std::string value_2 = "[789]";
 
 
-int sequence_num = 0;
-
-std::string get = "-set";
-std::string set = "-get";
-std::string key_1 = "kurt";
-std::string key_2 = "sterling";
-std::string value_1 = "google man";
-std::string value_2 = "old man";
-
-
-std::mutex mtx;
-std::condition_variable cv;
-bool ready = false;
-int num_threads_b = 0;
-
-
-struct event {
-  int seq_num;
+struct events {
+  int thread_id;
+  int sequence_number;
+  std::string operation;
+  std::vector<std::string> parameters;
   Result response;
 };
 
 
-void go() {
-  std::unique_lock<std::mutex> lck(mtx);
-  ready = true;
-  cv.notify_all();
-}
+std::vector<std::vector<events>> bigTable(num_of_threads * 2);
 
 
-void requests(std::string server, int port) {
+void requests(std::string server, int port, int id) {
 
   int rand_num;
   Result res;
@@ -84,7 +78,7 @@ void requests(std::string server, int port) {
   std::vector<std::string> random_keys;
   std::vector<std::string> random_values;
 
-  std::thread::id this_thread_id = std::this_thread::get_id();
+  // std::thread::id this_thread_id = std::this_thread::get_id();
 
 
   // =============================
@@ -93,7 +87,7 @@ void requests(std::string server, int port) {
 
 
 
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < num_of_runs; i++) {
     
     rand_num = rand() % 2;
     if (rand_num == 0)
@@ -133,45 +127,46 @@ void requests(std::string server, int port) {
   }
 
 
-  std::unique_lock<std::mutex> lck(mtx);
-  while (!ready) 
-    cv.wait(lck);
-
-
   // =============================
   // PERFORM TRANSACTIONS
   // =============================
 
+  std::vector<events> log;
 
-  std::vector<event> log;
-
-  for (int j = 0; j < 50; j++) {
+  for (int j = 0; j < num_of_runs; j++) {
     if (random_requests[j] == set) {
-      event data;
+      events data;
 
-      data.seq_num = sequence_num++;
+      data.thread_id = id;
+      data.operation = random_requests[j];
+      data.parameters.push_back(random_keys[j]);
+      data.parameters.push_back(random_values[j]);
+
+      data.sequence_number = sequence_no++;
       client.kvset(res, random_keys[j], random_values[j]);
       data.response = res;
-      //std::cout << "kvset(" + random_keys[j] + ", " + random_values[j] + ")" << ": " << res << std::endl;
-      //std::cout << type_id(res) << std::endl;
 
       log.push_back(data);
 
     }
     else {
-      event data;
+      events data;
 
-      data.seq_num = sequence_num++;
+      data.thread_id = id;
+      data.operation = random_requests[j];
+      data.parameters.push_back(random_keys[j]);
+
+      data.sequence_number = sequence_no++;
       client.kvget(res, random_keys[j]);
       data.response = res;
-      //std::cout << "------kvget(" + random_keys[j] + ")" << ": " << res << std::endl;
-      //std::cout << type_id(res) << std::endl;
 
       log.push_back(data);
 
     }
+    //std::cout << sequence_no << "           " << id << std::endl;
   }
-
+  // return log;
+  bigTable[id] = log;
 }
 
 
@@ -208,21 +203,116 @@ int main(int argc, char **argv) {
   // SET UP THREADS
   // =============================
 
+
   srand(time(NULL));
-  // std::vector<std::thread> threads;
+
+  std::thread threads[num_of_threads];
+  for (int i = 0 ; i < num_of_threads; i++)
+    threads[i] = std::thread(requests, server, port, i);
 
 
-  std::thread threads[5];
-  for (int i = 0 ; i < 5; i++)
-    threads[i] = std::thread(requests, server, port);
-
-  sleep(2);
-  go();
-
-  for (auto& t : threads) 
+  for (auto& t : threads) // immediate join for simultaneous concurrent threads
     t.join();
 
-  std::cout << sequence_num << std::endl;
+
+  // for (int i = 0; i < bigTable.size(); i++)
+  //   for (int j = 0; j < bigTable[i].size(); j++)
+  //     if (bigTable[i][j].operation == set)
+  //       std::cout << bigTable[i][j].sequence_number << " - " << bigTable[i][j].thread_id << " - " << bigTable[i][j].operation << " - " << bigTable[i][j].parameters[0] << " - " << bigTable[i][j].parameters[1] << " - " << bigTable[i][j].response << std::endl;
+  //     else
+  //       std::cout << bigTable[i][j].sequence_number << " - " << bigTable[i][j].thread_id << " - " << bigTable[i][j].operation << " - " << bigTable[i][j].parameters[0] << " - " << bigTable[i][j].response << std::endl;
 
 
+  // =============================
+  // SET UP BIGTABLE
+  // =============================
+
+
+  std::vector<events> sortedBigTable(num_of_threads * num_of_runs * 2);
+
+  std::cout << bigTable.size() << std::endl;
+
+  // while (index < (num_of_threads * num_of_runs)) 
+
+  for (size_t i = 0; i < bigTable.size(); i++)
+    for (size_t j = 0; j < bigTable[i].size(); j++) {
+      sortedBigTable[bigTable[i][j].sequence_number] = bigTable[i][j];
+    }
+
+  //std::cout << sortedBigTable.size() << std::endl;
+
+    int i = 0;
+    while (i < (num_of_runs * num_of_threads - 15)) { // YOU MAY OCCUR SEGMENTATION FAULT; do not process unknown memory.
+      if (sortedBigTable[i].operation == set)
+        std::cout << sortedBigTable[i].sequence_number << " - " << sortedBigTable[i].thread_id << " - " << sortedBigTable[i].operation << " - " << sortedBigTable[i].parameters[0] << " - " << sortedBigTable[i].parameters[1] << " - " << sortedBigTable[i].response << std::endl;
+      else
+        std::cout << sortedBigTable[i].sequence_number << " - " << sortedBigTable[i].thread_id << " - " << sortedBigTable[i].operation << " - " << sortedBigTable[i].parameters[0] << " - " << sortedBigTable[i].response << std::endl;
+      i++;
+    }
+
+
+  // =============================
+  // TIME TO DO ACTUAL TESTS
+  // =============================
+
+  
+  // std::string set = "[-set]";
+  // std::string get = "[-get]";
+  // std::string key_1 = "[abc]";
+  // std::string key_2 = "[xzy]";
+  // std::string value_1 = "[123]";
+  // std::string value_2 = "[789]";
+
+
+  int last_index;
+  int bug_index;
+  std::string last_operation;
+  std::string last_updated_value;
+  std::string last_parameter;
+
+
+  // check to see if clients can read updated values 
+  for (size_t i = 0; i < sortedBigTable.size(); i++) {
+    // solid set, xyz
+    if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[0] == key_2) ) {  
+      last_index = sortedBigTable[i].sequence_number;
+      last_updated_value = sortedBigTable[i].parameters[1]; // 123 or 789
+    }
+    // someone fetched xyz and didnt get what i set
+    if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].response.value != last_updated_value) ) {
+      bug_index = sortedBigTable[i].sequence_number;
+      std::cout << last_index << " - " << bug_index << std::endl;
+      exit(1);
+    }
+  }
+
+  
+  // check to see if clients are consistently reading updated values
+  last_updated_value = value_1;
+  for (size_t i = 0; i < sortedBigTable.size(); i++) {
+    // if get, xyz, 123
+    if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].response.value == value_1) ) { 
+      last_index = sortedBigTable[i].sequence_number;
+    }
+    // pin point xyz 123 -> 789. set triggers difference in gets.
+    if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].parameters[1] == value_2) ) {
+      last_index = sortedBigTable[i].sequence_number;
+      last_updated_value = set;
+    }
+    if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].response.value == value_2) ) { 
+      if (last_operation != set) {
+        bug_index = sortedBigTable[i].sequence_number;
+        std::cout << last_index << " - " << bug_index << std::endl;
+        exit(1);
+      }
+    }
+  }
+
+
+  for (size_t i = 0; i < sortedBigTable.size(); i++) {
+    if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[1] != sortedBigTable.response.value) )
+      exit(1);
+  }
+
+exit(0);
 }
