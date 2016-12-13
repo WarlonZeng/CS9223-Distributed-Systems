@@ -271,6 +271,15 @@ int main(int argc, char **argv) {
   std::string last_parameter;
 
 
+  for (size_t i = 0; i < sortedBigTable.size(); i++) {
+  	// this is not a real consistency error, it is simply that the first few random requests were fetching a value that doesn't exist yet.
+  	if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].response.error == ErrorCode::kKeyNotFound) ) {
+  		last_index = sortedBigTable[i].sequence_number;
+  		bug_index = sortedBigTable[i].sequence_number;
+  		exit(2);
+  	}
+  }
+
   // check to see if clients can read updated values 
   for (size_t i = 0; i < sortedBigTable.size(); i++) {
     // solid set, xyz
@@ -297,7 +306,7 @@ int main(int argc, char **argv) {
     // pin point xyz 123 -> 789. set triggers difference in gets.
     if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].parameters[1] == value_2) ) {
       last_index = sortedBigTable[i].sequence_number;
-      last_updated_value = set;
+      last_operation = set;
     }
     if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].response.value == value_2) ) { 
       if (last_operation != set) {

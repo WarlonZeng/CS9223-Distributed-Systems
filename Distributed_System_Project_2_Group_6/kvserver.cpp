@@ -74,7 +74,7 @@ class KVStoreHandler : virtual public KVStoreIf {
     }
 
     // printf("kvset\n");
-    std::cout << "kvset(" + key + ", " + value + ")" << ": " << _return << std::endl;
+    // std::cout << "kvset(" + key + ", " + value + ")" << ": " << _return << std::endl;
   }
 
 
@@ -94,7 +94,7 @@ class KVStoreHandler : virtual public KVStoreIf {
     }
 
     // printf("kvget\n");
-    std::cout << "------kvget(" + key + ")" << ": " << _return << std::endl;
+    // std::cout << "------kvget(" + key + ")" << ": " << _return << std::endl;
   }
 
 
