@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
   //std::cout << sortedBigTable.size() << std::endl;
 
     int i = 0;
-    while (i < (num_of_runs * num_of_threads - 15)) { // YOU MAY OCCUR SEGMENTATION FAULT; do not process unknown memory.
+    while (i < (num_of_runs * num_of_threads - 9)) { // YOU MAY OCCUR SEGMENTATION FAULT; do not process unknown memory.
       if (sortedBigTable[i].operation == set)
         std::cout << sortedBigTable[i].sequence_number << " - " << sortedBigTable[i].thread_id << " - " << sortedBigTable[i].operation << " - " << sortedBigTable[i].parameters[0] << " - " << sortedBigTable[i].parameters[1] << " - " << sortedBigTable[i].response << std::endl;
       else
@@ -276,9 +276,11 @@ int main(int argc, char **argv) {
   	if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].response.error == ErrorCode::kKeyNotFound) ) {
   		last_index = sortedBigTable[i].sequence_number;
   		bug_index = sortedBigTable[i].sequence_number;
+  		std::cout << "Between " << last_index << " and " << bug_index << ", " << get << " did not read in a value." << std::endl;
   		exit(2);
   	}
   }
+
 
   // check to see if clients can read updated values 
   for (size_t i = 0; i < sortedBigTable.size(); i++) {
@@ -290,7 +292,7 @@ int main(int argc, char **argv) {
     // someone fetched xyz and didnt get what i set
     if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].response.value != last_updated_value) ) {
       bug_index = sortedBigTable[i].sequence_number;
-      std::cout << last_index << " - " << bug_index << std::endl;
+      std::cout << "Between " << last_index << " and " << bug_index << ", " << get << " read an inconsistent value" << std::endl;
       exit(1);
     }
   }
@@ -311,21 +313,21 @@ int main(int argc, char **argv) {
     if ( (sortedBigTable[i].operation == get) && (sortedBigTable[i].parameters[0] == key_2) && (sortedBigTable[i].response.value == value_2) ) { 
       if (last_operation != set) {
         bug_index = sortedBigTable[i].sequence_number;
-        std::cout << last_index << " - " << bug_index << std::endl;
+        std::cout << "Between " << last_index << " and " << bug_index << ", " << get << " read an inconsistent value" << std::endl;
         exit(1);
       }
     }
   }
 
 
-  for (size_t i = 0; i < sortedBigTable.size(); i++) {
-    if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[1] != sortedBigTable[i].response.value) ) {
-      last_index = sortedBigTable[i].sequence_number;
-      bug_index = sortedBigTable[i].sequence_number;
-      std::cout << last_index << " - " << bug_index << std::endl;
-      exit(1);
-    }
-  }
+  // for (size_t i = 0; i < sortedBigTable.size(); i++) {
+  //   if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[1] != sortedBigTable[i].response.value) ) {
+  //     last_index = sortedBigTable[i].sequence_number;
+  //     bug_index = sortedBigTable[i].sequence_number;
+  //     std::cout << last_index << " - " << bug_index << std::endl;
+  //     exit(1);
+  //   }
+  // }
 
 exit(0);
 }
