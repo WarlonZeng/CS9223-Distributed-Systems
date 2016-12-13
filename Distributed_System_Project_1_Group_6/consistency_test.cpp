@@ -310,8 +310,12 @@ int main(int argc, char **argv) {
 
 
   for (size_t i = 0; i < sortedBigTable.size(); i++) {
-    if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[1] != sortedBigTable.response.value) )
+    if ( (sortedBigTable[i].operation == set) && (sortedBigTable[i].parameters[1] != sortedBigTable[i].response.value) ) {
+      last_index = sortedBigTable[i].sequence_number;
+      bug_index = sortedBigTable[i].sequence_number;
+      std::cout << last_index << " - " << bug_index << std::endl;
       exit(1);
+    }
   }
 
 exit(0);
